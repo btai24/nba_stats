@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/btai35/nba_stats/app/games"
 )
 
 type Scoreboard struct {
@@ -13,7 +16,7 @@ type Scoreboard struct {
 }
 
 type ResultSet struct {
-	Name    string          `json:"resource"`
+	Name    string          `json:"name"`
 	Headers []string        `json:"headers"`
 	RowSet  [][]interface{} `json:rowSet`
 }
@@ -37,5 +40,34 @@ func main() {
 
 	var scoreboard Scoreboard
 	json.NewDecoder(res.Body).Decode(&scoreboard)
-	fmt.Println(scoreboard)
+
+	for _, set := range scoreboard.ResultSets {
+		switch set.Name {
+		case "GameHeader":
+			for _, row := range set.RowSet {
+				gameTime, err := time.Parse("2006-01-02T15:04:05", row[0].(string))
+				if err != nil {
+					fmt.Println(err)
+				}
+				game := games.GameHeader{
+					GameDateEst:    gameTime,
+					GameSequence:   int(row[1].(float64)),
+					GameID:         row[2].(string),
+					GameStatusID:   int(row[3].(float64)),
+					GameStatusText: row[4].(string),
+					GameCode:       row[5].(string),
+					HomeTeamID:     strconv.Itoa(int(row[6].(float64))),
+					VisitorTeamID:  strconv.Itoa(int(row[7].(float64))),
+					Season:         row[8].(string),
+					LivePeriod:     int(row[9].(float64)),
+					LivePcTime:     row[10].(string),
+					// NatlTVBroadcater: row[11].(string),
+					// HomeTVBroadcater: row[12].(string),
+					// AwayTVBroadcater: row[13].(string),
+				}
+
+				fmt.Println(game)
+			}
+		}
+	}
 }
