@@ -3,7 +3,7 @@ package games
 import "time"
 
 type Header struct {
-	GameDateEST    time.Time // TODO: turn into a date type
+	GameDate       time.Time // TODO: turn into a date type
 	GameSequence   int
 	GameID         string
 	GameStatusID   int
@@ -23,7 +23,7 @@ type Header struct {
 }
 
 type Scoreboard struct {
-	GameDateEST  time.Time
+	GameDate     time.Time
 	GameSequence int
 	GameID       string
 	TeamID       int
@@ -51,4 +51,37 @@ type Scoreboard struct {
 	AST          int
 	REB          int
 	TOV          int
+}
+
+type LastMeeting struct {
+	GameID       string
+	LastGameID   string
+	LastGameDate time.Time
+	HomeID       int
+	HomeCity     string
+	HomeName     string
+	HomeAbv      string
+	HomePts      int
+	VisitorID    int
+	VisitorCity  string
+	VisitorName  string
+	VisitorAbv   string
+	VisitorPts   int
+}
+
+type TeamLeaders struct {
+	GameID        string
+	TeamID        int
+	TeamCity      string
+	TeamName      string
+	TeamAbv       string
+	PtsPlayerID   int
+	PtsPlayerName string
+	Pts           int
+	RebPlayerID   int
+	RebPlayerName string
+	Reb           int
+	AstPlayerID   int
+	AstPlayerName string
+	Ast           int
 }

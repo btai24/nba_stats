@@ -50,7 +50,7 @@ func main() {
 					fmt.Println(err)
 				}
 				game := games.Header{
-					GameDateEST:    gameTime,
+					GameDate:       gameTime,
 					GameSequence:   int(row[1].(float64)),
 					GameID:         row[2].(string),
 					GameStatusID:   int(row[3].(float64)),
@@ -74,7 +74,7 @@ func main() {
 					fmt.Println(err)
 				}
 				score := games.Scoreboard{
-					GameDateEST:  gameTime,
+					GameDate:     gameTime,
 					GameSequence: int(row[1].(float64)),
 					GameID:       row[2].(string),
 					TeamID:       int(row[3].(float64)),
@@ -115,12 +115,84 @@ func main() {
 					GameID:       row[0].(string),
 					HomeID:       int(row[1].(float64)),
 					VisitorID:    int(row[2].(float64)),
-					GameDateEST:  gameTime,
+					GameDate:     gameTime,
 					HomeWins:     int(row[4].(float64)),
 					HomeLosses:   int(row[5].(float64)),
 					SeriesLeader: row[6].(string),
 				}
 				fmt.Println(series)
+			}
+		case "LastMeeting":
+			for _, row := range set.RowSet {
+				gameTime, err := time.Parse("2006-01-02T15:04:05", row[2].(string))
+				if err != nil {
+					fmt.Println(err)
+				}
+				lastMeeting := games.LastMeeting{
+					GameID:       row[0].(string),
+					LastGameID:   row[1].(string),
+					LastGameDate: gameTime,
+					HomeID:       int(row[3].(float64)),
+					HomeCity:     row[4].(string),
+					HomeName:     row[5].(string),
+					HomeAbv:      row[6].(string),
+					HomePts:      int(row[7].(float64)),
+					VisitorID:    int(row[8].(float64)),
+					VisitorCity:  row[9].(string),
+					VisitorName:  row[10].(string),
+					VisitorAbv:   row[11].(string),
+					VisitorPts:   int(row[12].(float64)),
+				}
+				fmt.Println(lastMeeting)
+			}
+		case "EastConfStandingsByDay", "WestConfStandingsByDay":
+			conf := standings.ConferenceByDay{}
+			if set.Name == "EastConfStandingsByDay" {
+				conf.Conference = "East"
+			} else {
+				conf.Conference = "West"
+			}
+			var teams [15]standings.Team
+			for i, row := range set.RowSet {
+				if i == 0 {
+					confDate, err := time.Parse("01/02/2006", row[3].(string))
+					if err != nil {
+						fmt.Println(err)
+					}
+					conf.Date = confDate
+				}
+				teams[i] = standings.Team{
+					TeamID:     int(row[0].(float64)),
+					SeasonID:   row[2].(string),
+					City:       row[5].(string),
+					Win:        int(row[7].(float64)),
+					Loss:       int(row[8].(float64)),
+					WinPct:     row[9].(float64),
+					HomeRecord: row[10].(string),
+					RoadRecord: row[11].(string),
+				}
+			}
+			conf.Teams = teams
+			fmt.Println(conf)
+		case "TeamLeaders":
+			for _, row := range set.RowSet {
+				leaders := games.TeamLeaders{
+					GameID:        row[0].(string),
+					TeamID:        int(row[1].(float64)),
+					TeamCity:      row[2].(string),
+					TeamName:      row[3].(string),
+					TeamAbv:       row[4].(string),
+					PtsPlayerID:   int(row[5].(float64)),
+					PtsPlayerName: row[6].(string),
+					Pts:           int(row[7].(float64)),
+					RebPlayerID:   int(row[8].(float64)),
+					RebPlayerName: row[9].(string),
+					Reb:           int(row[10].(float64)),
+					AstPlayerID:   int(row[11].(float64)),
+					AstPlayerName: row[12].(string),
+					Ast:           int(row[13].(float64)),
+				}
+				fmt.Println(leaders)
 			}
 		}
 	}
