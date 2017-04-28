@@ -49,7 +49,7 @@ func main() {
 				if err != nil {
 					fmt.Println(err)
 				}
-				game := games.GameHeader{
+				game := games.Header{
 					GameDateEst:    gameTime,
 					GameSequence:   int(row[1].(float64)),
 					GameID:         row[2].(string),
@@ -65,8 +65,45 @@ func main() {
 					// HomeTVBroadcater: row[12].(string),
 					// AwayTVBroadcater: row[13].(string),
 				}
-
 				fmt.Println(game)
+			}
+		case "LineScore":
+			for _, row := range set.RowSet {
+				gameTime, err := time.Parse("2006-01-02T15:04:05", row[0].(string))
+				if err != nil {
+					fmt.Println(err)
+				}
+				score := games.Scoreboard{
+					GameDateEst:  gameTime,
+					GameSequence: int(row[1].(float64)),
+					GameID:       row[2].(string),
+					TeamID:       strconv.Itoa(int(row[3].(float64))),
+					TeamAbv:      row[4].(string),
+					TeamCity:     row[5].(string),
+					TeamWL:       row[6].(string),
+					Q1:           int(row[7].(float64)),
+					Q2:           int(row[8].(float64)),
+					Q3:           int(row[9].(float64)),
+					Q4:           int(row[10].(float64)),
+					OT1:          int(row[11].(float64)),
+					OT2:          int(row[12].(float64)),
+					OT3:          int(row[13].(float64)),
+					OT4:          int(row[14].(float64)),
+					OT5:          int(row[15].(float64)),
+					OT6:          int(row[16].(float64)),
+					OT7:          int(row[17].(float64)),
+					OT8:          int(row[18].(float64)),
+					OT9:          int(row[19].(float64)),
+					OT10:         int(row[20].(float64)),
+					PTS:          int(row[21].(float64)),
+					FG:           row[22].(float64),
+					FT:           row[23].(float64),
+					FG3:          row[24].(float64),
+					AST:          int(row[25].(float64)),
+					REB:          int(row[26].(float64)),
+					TOV:          int(row[27].(float64)),
+				}
+				fmt.Println(score)
 			}
 		}
 	}
