@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/btai35/nba_stats/app/games"
+	"github.com/btai35/nba_stats/app/standings"
 )
 
 type Scoreboard struct {
@@ -50,14 +50,14 @@ func main() {
 					fmt.Println(err)
 				}
 				game := games.Header{
-					GameDateEst:    gameTime,
+					GameDateEST:    gameTime,
 					GameSequence:   int(row[1].(float64)),
 					GameID:         row[2].(string),
 					GameStatusID:   int(row[3].(float64)),
 					GameStatusText: row[4].(string),
 					GameCode:       row[5].(string),
-					HomeTeamID:     strconv.Itoa(int(row[6].(float64))),
-					VisitorTeamID:  strconv.Itoa(int(row[7].(float64))),
+					HomeTeamID:     int(row[6].(float64)),
+					VisitorTeamID:  int(row[7].(float64)),
 					Season:         row[8].(string),
 					LivePeriod:     int(row[9].(float64)),
 					LivePcTime:     row[10].(string),
@@ -74,10 +74,10 @@ func main() {
 					fmt.Println(err)
 				}
 				score := games.Scoreboard{
-					GameDateEst:  gameTime,
+					GameDateEST:  gameTime,
 					GameSequence: int(row[1].(float64)),
 					GameID:       row[2].(string),
-					TeamID:       strconv.Itoa(int(row[3].(float64))),
+					TeamID:       int(row[3].(float64)),
 					TeamAbv:      row[4].(string),
 					TeamCity:     row[5].(string),
 					TeamWL:       row[6].(string),
@@ -104,6 +104,23 @@ func main() {
 					TOV:          int(row[27].(float64)),
 				}
 				fmt.Println(score)
+			}
+		case "SeriesStandings":
+			for _, row := range set.RowSet {
+				gameTime, err := time.Parse("2006-01-02T15:04:05", row[3].(string))
+				if err != nil {
+					fmt.Println(err)
+				}
+				series := standings.Series{
+					GameID:       row[0].(string),
+					HomeID:       int(row[1].(float64)),
+					VisitorID:    int(row[2].(float64)),
+					GameDateEST:  gameTime,
+					HomeWins:     int(row[4].(float64)),
+					HomeLosses:   int(row[5].(float64)),
+					SeriesLeader: row[6].(string),
+				}
+				fmt.Println(series)
 			}
 		}
 	}
