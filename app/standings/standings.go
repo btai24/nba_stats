@@ -32,14 +32,24 @@ type Team struct {
 	Profile        TeamProfile `json:"profile"`
 	Wins           int         `json:"wins"`
 	Losses         int         `json:"losses"`
-	GamesBehind    float64     `json:"games_behind"`
-	WinPct         float64     `json:"win_percentage"`
+	GamesBehind    float32     `json:"games_behind"`
+	WinPct         float32     `json:"win_percentage"`
 	ConferenceRank int         `json:"conference_rank"`
 	Streak         int         `json:"streak"`
 	Record         string      `json:"record"`
 	HomeRecord     string      `json:"home_record"`
 	AwayRecord     string      `json:"away_record"`
 	LastTen        string      `json:"last_ten"`
+}
+
+type TeamProfile struct {
+	Abbreviation string `json:"abbreviation"`
+	City         string `json:"city"`
+	FullName     string `json:"full_name"`
+	Name         string `json:"name"`
+	UrlName      string `json:"url_name"`
+	Conference   string `json:"conference"`
+	Division     string `json:"division"`
 }
 
 func GetConferenceStandings(c *gin.Context) {
@@ -68,17 +78,6 @@ func GetConferenceStandings(c *gin.Context) {
 	c.Writer.Write(json)
 }
 
-// Redis struct - move?
-type TeamProfile struct {
-	Abbreviation string `json:"triCode"`
-	City         string `json:"city"`
-	FullName     string `json:"fullName"`
-	Name         string `json:"nickname"`
-	UrlName      string `json:"urlName"`
-	Conference   string `json:"confName"`
-	Division     string `json:"divName"`
-}
-
 func formTeam(c *gin.Context, team api.StandingsTeam) Team {
 	// TODO: handle error
 	redisClient, _ := deps.RedisClient(c)
@@ -98,8 +97,8 @@ func formTeam(c *gin.Context, team api.StandingsTeam) Team {
 		Id:             team.Id,
 		Wins:           wins,
 		Losses:         losses,
-		WinPct:         winPct,
-		GamesBehind:    gamesBehind,
+		WinPct:         float32(winPct),
+		GamesBehind:    float32(gamesBehind),
 		ConferenceRank: confRank,
 		Streak:         streak,
 		Record:         fmt.Sprintf("%s-%s", team.Wins, team.Losses),
