@@ -2,8 +2,6 @@ package games
 
 import (
 	"encoding/json"
-	"fmt"
-	"net/http"
 	"strconv"
 	"time"
 
@@ -37,20 +35,10 @@ func GetScores(c *gin.Context) {
 		date = tmpDate.Format("20060102")
 	}
 
-	endpoint := fmt.Sprintf("%s/%s/scoreboard.json", c.GetString("NBA_ENDPOINT"), date)
-	client := &http.Client{Timeout: time.Second * 10}
-	req, _ := http.NewRequest("GET", endpoint, nil)
-	res, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	var scoreboard api.Scoreboard
-	json.NewDecoder(res.Body).Decode(&scoreboard)
+	// TODO: handle error
+	scoreboard, _ := api.GetScoreboard(c, date)
 
 	boxScores := []BoxScore{}
-
 	for _, game := range scoreboard.Games {
 		hTeamScore := []int{}
 		for _, quarter := range game.HomeTeam.LineScore {
@@ -92,7 +80,7 @@ func GetScores(c *gin.Context) {
 		boxScores = append(boxScores, boxScore)
 	}
 
-	// TODO(Brian): handle error
+	// TODO: handle error
 	json, _ := json.Marshal(boxScores)
 
 	c.Writer.Header().Set("Content-Type", "application/json")
