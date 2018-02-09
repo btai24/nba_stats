@@ -43,15 +43,6 @@ type Period struct {
 	IsEndOfPeriod bool `json:"isEndOfPeriod"`
 }
 
-type Team struct {
-	Id           string  `json:"teamId"`
-	Abbreviation string  `json:"triCode"`
-	Wins         string  `json:"win"`
-	Losses       string  `json:"loss"`
-	Score        string  `json:"score"`
-	LineScore    []Score `json:"linescore"`
-}
-
 type Score struct {
 	Score string `json:"score"`
 }

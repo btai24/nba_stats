@@ -3,6 +3,7 @@ package standings
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 
@@ -27,17 +28,18 @@ type ConferenceStandings struct {
 }
 
 type Team struct {
-	TeamID         string  `json:"id"`
-	Wins           int     `json:"wins"`
-	Losses         int     `json:"losses"`
-	GamesBehind    float64 `json:"games_behind"`
-	WinPct         float64 `json:"win_percentage"`
-	ConferenceRank int     `json:"conference_rank"`
-	Streak         int     `json:"streak"`
-	Record         string  `json:"record"`
-	HomeRecord     string  `json:"home_record"`
-	AwayRecord     string  `json:"away_record"`
-	LastTen        string  `json:"last_ten"`
+	Id             string      `json:"id"`
+	Profile        TeamProfile `json:"profile"`
+	Wins           int         `json:"wins"`
+	Losses         int         `json:"losses"`
+	GamesBehind    float64     `json:"games_behind"`
+	WinPct         float64     `json:"win_percentage"`
+	ConferenceRank int         `json:"conference_rank"`
+	Streak         int         `json:"streak"`
+	Record         string      `json:"record"`
+	HomeRecord     string      `json:"home_record"`
+	AwayRecord     string      `json:"away_record"`
+	LastTen        string      `json:"last_ten"`
 }
 
 func GetConferenceStandings(c *gin.Context) {
@@ -46,15 +48,12 @@ func GetConferenceStandings(c *gin.Context) {
 	var eastStandings [15]Team
 	var westStandings [15]Team
 
-	// TODO: handle error
-	redisClient, _ := deps.RedisClient(c)
-
 	for i, team := range standings.Conference.East {
-		eastStandings[i] = formTeam(team)
+		eastStandings[i] = formTeam(c, team)
 	}
 
 	for i, team := range standings.Conference.West {
-		westStandings[i] = formTeam(team)
+		westStandings[i] = formTeam(c, team)
 	}
 
 	confStandings := ConferenceStandings{
@@ -69,24 +68,21 @@ func GetConferenceStandings(c *gin.Context) {
 	c.Writer.Write(json)
 }
 
-// type StandingsTeam struct {
-// 	Id             string `json:"teamId"`
-// 	Wins           string `json:"win"`
-// 	Losses         string `json:"loss"`
-// 	WinPct         string `json:"winPct"`
-// 	GamesBehind    string `json:"gamesBehind"`
-// 	ConferenceRank string `json:"confRank"`
-// 	Streak         string `json:"streak"`
-// 	IsWinStreak    bool   `json:"isWinStreak"`
-// 	HomeWins       string `json:"homeWin"`
-// 	HomeLosses     string `json:"homeLoss"`
-// 	AwayWins       string `json:"awayWin"`
-// 	AwayLosses     string `json:"awayLoss"`
-// 	LastTenWins    string `json:"lastTenWin"`
-// 	LastTenLosses  string `json:"lastTenLoss"`
-// }
+// Redis struct - move?
+type TeamProfile struct {
+	Abbreviation string `json:"triCode"`
+	City         string `json:"city"`
+	FullName     string `json:"fullName"`
+	Name         string `json:"nickname"`
+	UrlName      string `json:"urlName"`
+	Conference   string `json:"confName"`
+	Division     string `json:"divName"`
+}
 
-func formTeam(team api.StandingsTeam) Team {
+func formTeam(c *gin.Context, team api.StandingsTeam) Team {
+	// TODO: handle error
+	redisClient, _ := deps.RedisClient(c)
+
 	wins, _ := strconv.Atoi(team.Wins)
 	losses, _ := strconv.Atoi(team.Losses)
 	winPct, _ := strconv.ParseFloat(team.WinPct, 32)
@@ -98,22 +94,46 @@ func formTeam(team api.StandingsTeam) Team {
 		streak = streak * -1
 	}
 
-	record := fmt.Sprintf("%s-%s", team.Wins, team.Losses)
-	homeRecord := fmt.Sprintf("%s-%s", team.HomeWins, team.HomeLosses)
-	awayRecord := fmt.Sprintf("%s-%s", team.AwayWins, team.AwayLosses)
-	lastTen := fmt.Sprintf("%s-%s", team.LastTenWins, team.LastTenLosses)
-
-	return Team{
-		TeamID:         team.Id,
+	formedTeam := Team{
+		Id:             team.Id,
 		Wins:           wins,
 		Losses:         losses,
 		WinPct:         winPct,
 		GamesBehind:    gamesBehind,
 		ConferenceRank: confRank,
 		Streak:         streak,
-		Record:         record,
-		HomeRecord:     homeRecord,
-		AwayRecord:     awayRecord,
-		LastTen:        lastTen,
+		Record:         fmt.Sprintf("%s-%s", team.Wins, team.Losses),
+		HomeRecord:     fmt.Sprintf("%s-%s", team.HomeWins, team.HomeLosses),
+		AwayRecord:     fmt.Sprintf("%s-%s", team.AwayWins, team.AwayLosses),
+		LastTen:        fmt.Sprintf("%s-%s", team.LastTenWins, team.LastTenLosses),
 	}
+
+	teamKey := fmt.Sprintf("team:info#%s", team.Id)
+	teamInfo, _ := redisClient.Get(teamKey).Result()
+
+	if teamInfo == "" {
+		teams, _ := api.GetTeams(c)
+		for _, t := range teams {
+			if t.Id == team.Id {
+				profile := TeamProfile{
+					Abbreviation: t.Abbreviation,
+					City:         t.City,
+					FullName:     t.FullName,
+					Name:         t.Name,
+					UrlName:      t.UrlName,
+					Conference:   t.Conference,
+					Division:     t.Division,
+				}
+				json, _ := json.Marshal(profile)
+				redisClient.Set(teamKey, json, math.MaxInt32*time.Second)
+				formedTeam.Profile = profile
+			}
+		}
+	} else {
+		var profile TeamProfile
+		json.Unmarshal([]byte(teamInfo), &profile)
+		formedTeam.Profile = profile
+	}
+
+	return formedTeam
 }

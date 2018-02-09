@@ -7,11 +7,11 @@ import (
 
 func SetNbaEndpoint(c *gin.Context) {
 	c.Set("NBA_ENDPOINT", "http://data.nba.net/10s/prod/v1")
-
 	c.Next()
 }
 
 func SetRedisClient(c *gin.Context) {
+	//TODO: Pass in Redis info as env vars
 	client := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set
@@ -19,7 +19,6 @@ func SetRedisClient(c *gin.Context) {
 	})
 
 	c.Set("REDIS_CLIENT", client)
-
 	c.Next()
 }
 
